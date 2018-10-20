@@ -143,6 +143,14 @@ class Attribute(models.Model):
 
     # Core attributes
 
+    contenttype = models.ForeignKey(
+        ContentType,
+        on_delete    = models.PROTECT,
+        related_name = 'eav_attributes',
+        null=True,
+        blank=True,
+    )
+
     datatype = EavDatatypeField(
         verbose_name = _('Data Type'),
         choices      = DATATYPE_CHOICES,
@@ -505,7 +513,7 @@ class Entity(object):
         Return a query set of all :class:`Attribute` objects that can be set
         for this entity.
         """
-        return self.instance._eav_config_cls.get_attributes().order_by('display_order')
+        return self.instance._eav_config_cls.get_attributes(entity=self.instance).order_by('display_order')
 
     def _hasattr(self, attribute_slug):
         """

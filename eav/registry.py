@@ -2,6 +2,7 @@
 
 from django.contrib.contenttypes import fields as generic
 from django.db.models.signals import post_init, post_save, pre_save
+from django.contrib.contenttypes.models import ContentType
 
 from .managers import EntityManager
 from .models import Attribute, Entity, Value
@@ -33,11 +34,24 @@ class EavConfig(object):
     generic_relation_related_name = None
 
     @classmethod
-    def get_attributes(cls):
+    def get_attributes(cls, entity=None):
         """
         By default, all :class:`~eav.models.Attribute` object apply to an
         entity, unless you provide a custom EavConfig class overriding this.
         """
+        # only return attributes matching the ContentType of this entity?
+        if entity:
+            try:
+                ct = ContentType.objects.get(
+                    app_label=entity._meta.app_label,
+                    model=entity.__class__.__name__.lower()
+                )
+                return Attribute.objects.filter(contenttype=ct)
+            except ContentType.DoesNotExist:
+                # ContentType not found
+                pass
+
+        # return all Attributes
         return Attribute.objects.all()
 
 
