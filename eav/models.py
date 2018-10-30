@@ -143,12 +143,34 @@ class Attribute(models.Model):
 
     # Core attributes
 
-    contenttype = models.ForeignKey(
+    """
+    ContentType for the attribute.
+    If set, the attribute is only available to entities of the selected ContentType
+    Use this if an Attribute is only relevant for a specific model.
+    """
+    entity_ct = models.ForeignKey(
         ContentType,
-        on_delete    = models.PROTECT,
+        on_delete = models.PROTECT,
         related_name = 'eav_attributes',
         null=True,
         blank=True,
+        help_text='Limit this Attribute to only apply to entities of this ContentType',
+    )
+
+    """
+    Entity ID for the attribute.
+    If set, the attribute is only available to the entity with the specified PK.
+    Use this if an attribute is only relevant for a single instance of a model.
+    """
+    entity_id = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Further limit this Attribute to only apply to the entity with this PK',
+    )
+
+    entity_fk = generic.GenericForeignKey(
+        ct_field = 'entity_ct',
+        fk_field = 'entity_id',
     )
 
     datatype = EavDatatypeField(
