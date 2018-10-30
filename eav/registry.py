@@ -3,6 +3,7 @@
 from django.contrib.contenttypes import fields as generic
 from django.db.models.signals import post_init, post_save, pre_save
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 
 from .managers import EntityManager
 from .models import Attribute, Entity, Value
@@ -37,21 +38,40 @@ class EavConfig(object):
     def get_attributes(cls, entity=None):
         """
         By default, all :class:`~eav.models.Attribute` object apply to an
-        entity, unless you provide a custom EavConfig class overriding this.
+        entity, except when the :class:`~eav.models.Attribute` is limited
+        to a specific ContentType or PK.
+        You can provide a custom EavConfig class overriding this.
         """
-        # only return attributes matching the ContentType of this entity?
+        # do we have an entity to work with?
         if entity:
-            try:
-                ct = ContentType.objects.get(
-                    app_label=entity._meta.app_label,
-                    model=entity.__class__.__name__.lower()
-                )
-                return Attribute.objects.filter(contenttype=ct)
-            except ContentType.DoesNotExist:
-                # ContentType not found
-                pass
+            # get the ContentType of this entity
+            ct = ContentType.objects.get(
+                app_label=entity._meta.app_label,
+                model=entity.__class__.__name__.lower()
+            )
 
-        # return all Attributes
+            # get the Attributes which apply to all Entities
+            all_atts = Q(
+                entity_ct__isnull=True,
+                entity_id__isnull=True,
+            )
+
+            # also get the Attributes which only apply to the ContentType of this entity
+            ct_atts = Q(
+                entity_ct=ct,
+                entity_id__isnull=True,
+            )
+
+            # finally get all Attributes which only apply to this specific entity
+            pk_atts = Q(
+                entity_ct=ct,
+                entity_id=entity.pk,
+            )
+
+            return Attribute.objects.filter(
+                all_atts | ct_atts | pk_atts
+            )
+
         return Attribute.objects.all()
 
 
