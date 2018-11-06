@@ -3,7 +3,7 @@
 from copy import deepcopy
 
 from django.contrib.admin.widgets import AdminSplitDateTime
-from django.forms import (BooleanField, CharField, ChoiceField, DateTimeField,
+from django.forms import (BooleanField, CharField, ChoiceField, SplitDateTimeField,
                           FloatField, IntegerField, ModelForm)
 from django.utils.translation import ugettext_lazy as _
 
@@ -34,7 +34,7 @@ class BaseDynamicEntityForm(ModelForm):
         'text': CharField,
         'float': FloatField,
         'int': IntegerField,
-        'date': DateTimeField,
+        'date': SplitDateTimeField,
         'bool': BooleanField,
         'enum': ChoiceField,
     }
