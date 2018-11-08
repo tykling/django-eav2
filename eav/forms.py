@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from django.contrib.admin.widgets import AdminSplitDateTime
 from django.forms import (BooleanField, CharField, ChoiceField, SplitDateTimeField,
-                          FloatField, IntegerField, ModelForm)
+                          FloatField, IntegerField, ModelForm, ModelChoiceField)
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -29,6 +29,7 @@ class BaseDynamicEntityForm(ModelForm):
     date   DateTimeField
     bool   BooleanField
     enum   ChoiceField
+    object ModelChoiceField
     =====  =============
     """
     FIELD_CLASSES = {
@@ -38,6 +39,7 @@ class BaseDynamicEntityForm(ModelForm):
         'date': SplitDateTimeField,
         'bool': BooleanField,
         'enum': ChoiceField,
+        'object': ModelChoiceField,
     }
 
     def __init__(self, data=None, *args, **kwargs):
@@ -73,7 +75,9 @@ class BaseDynamicEntityForm(ModelForm):
             elif datatype == attribute.TYPE_DATE:
                 defaults.update({'widget': AdminSplitDateTime})
             elif datatype == attribute.TYPE_OBJECT:
-                continue
+                # start with an empty queryset, implementations can override
+                # get_form() and supply a suitable queryset for the dropdown
+                defaults.update({'queryset': attribute.__class__.objects.none()})
 
             MappedField = self.FIELD_CLASSES[datatype]
             self.fields[attribute.slug] = MappedField(**defaults)
