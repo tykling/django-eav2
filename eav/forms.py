@@ -24,8 +24,9 @@ class BaseDynamicEntityForm(ModelForm):
     Type      Field
     =====  =============
     text   CharField
-    float  IntegerField
-    int    DateTimeField
+    float  FloatField
+    int    IntegerField,
+    date   DateTimeField
     bool   BooleanField
     enum   ChoiceField
     =====  =============
