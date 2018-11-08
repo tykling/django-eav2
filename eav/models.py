@@ -222,6 +222,14 @@ class Attribute(models.Model):
         help_text    = _('Short description')
     )
 
+    extra_data = models.CharField(
+        verbose_name = _('Extra data'),
+        max_length   = 256,
+        blank        = True,
+        null         = True,
+        help_text    = _('Extra data for this attribute')
+    )
+
     # Useful meta-information
 
     display_order = models.PositiveIntegerField(
