@@ -5,6 +5,8 @@ from copy import deepcopy
 from django.contrib.admin.widgets import AdminSplitDateTime
 from django.forms import (BooleanField, CharField, ChoiceField, SplitDateTimeField,
                           FloatField, IntegerField, ModelForm, ModelChoiceField)
+from django.contrib.gis import forms as gisforms
+from leaflet.forms.widgets import LeafletWidget
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -30,6 +32,8 @@ class BaseDynamicEntityForm(ModelForm):
     bool   BooleanField
     enum   ChoiceField
     object ModelChoiceField
+    point  PointField (GeoDjango)
+    area   PolygonField (GeoDjango)
     =====  =============
     """
     FIELD_CLASSES = {
@@ -40,6 +44,8 @@ class BaseDynamicEntityForm(ModelForm):
         'bool': BooleanField,
         'enum': ChoiceField,
         'object': ModelChoiceField,
+        'point': gisforms.PointField,
+        'area': gisforms.PolygonField,
     }
 
     def __init__(self, data=None, *args, **kwargs):
@@ -78,6 +84,11 @@ class BaseDynamicEntityForm(ModelForm):
                 # start with an empty queryset, implementations can override
                 # get_form() and supply a suitable queryset for the dropdown
                 defaults.update({'queryset': attribute.__class__.objects.none()})
+            elif datatype == attribute.TYPE_POINT:
+                #defaults.update({'widget': gisforms.OSMWidget(attrs={'map_width': 800, 'map_height': 500})})
+                defaults.update({'widget': LeafletWidget()})
+            elif datatype == attribute.TYPE_AREA:
+                defaults.update({'widget': LeafletWidget()})
 
             MappedField = self.FIELD_CLASSES[datatype]
             self.fields[attribute.slug] = MappedField(**defaults)

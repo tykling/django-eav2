@@ -18,6 +18,7 @@ from django.db import models
 from django.db.models.base import ModelBase
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.gis.db.models import PointField, PolygonField
 
 from .exceptions import IllegalAssignmentException
 from .fields import EavDatatypeField, EavSlugField
@@ -90,7 +91,7 @@ class Attribute(models.Model):
        to save or create any entity object for which this attribute applies,
        without first setting this EAV attribute.
 
-    There are 7 possible values for datatype:
+    There are 9 possible values for datatype:
 
         * int (TYPE_INT)
         * float (TYPE_FLOAT)
@@ -99,6 +100,8 @@ class Attribute(models.Model):
         * bool (TYPE_BOOLEAN)
         * object (TYPE_OBJECT)
         * enum (TYPE_ENUM)
+        * location (TYPE_POINT)
+        * area (TYPE_POLYGON)
 
     Examples::
 
@@ -130,6 +133,8 @@ class Attribute(models.Model):
     TYPE_BOOLEAN = 'bool'
     TYPE_OBJECT  = 'object'
     TYPE_ENUM    = 'enum'
+    TYPE_POINT   = 'point'
+    TYPE_AREA    = 'area'
 
     DATATYPE_CHOICES = (
         (TYPE_TEXT,    _('Text')),
@@ -139,6 +144,8 @@ class Attribute(models.Model):
         (TYPE_BOOLEAN, _('True / False')),
         (TYPE_OBJECT,  _('Django Object')),
         (TYPE_ENUM,    _('Multiple Choice')),
+        (TYPE_POINT,   _('Coordinates')),
+        (TYPE_AREA,    _('Area')),
     )
 
     # Core attributes
@@ -270,6 +277,8 @@ class Attribute(models.Model):
             'bool':   validate_bool,
             'object': validate_object,
             'enum':   validate_enum,
+            'point':  validate_point,
+            'area':   validate_area,
         }
 
         return [DATATYPE_VALIDATORS[self.datatype]]
@@ -402,6 +411,8 @@ class Value(models.Model):
     value_int   = models.IntegerField(blank = True, null = True)
     value_date  = models.DateTimeField(blank = True, null = True)
     value_bool  = models.NullBooleanField(blank = True, null = True)
+    value_point = PointField(blank = True, null = True)
+    value_area  = PolygonField(srid=4326, geography=True, blank = True, null = True)
 
     value_enum  = models.ForeignKey(
         EnumValue,
