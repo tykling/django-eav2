@@ -1,6 +1,7 @@
 """This module contains classes used for admin integration."""
 
 from django.contrib import admin
+from django.contrib.gis import admin as gisadmin
 from django.contrib.admin.options import InlineModelAdmin, ModelAdmin
 from django.forms.models import BaseInlineFormSet
 from django.utils.safestring import mark_safe
@@ -82,4 +83,4 @@ class AttributeAdmin(ModelAdmin):
 admin.site.register(Attribute, AttributeAdmin)
 admin.site.register(EnumValue)
 admin.site.register(EnumGroup)
-admin.site.register(Value)
+admin.site.register(Value, gisadmin.OSMGeoAdmin)

@@ -18,6 +18,7 @@ from django.db import models
 from django.db.models.base import ModelBase
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.gis.db.models import PointField, PolygonField
 
 from .exceptions import IllegalAssignmentException
 from .fields import EavDatatypeField, EavSlugField
@@ -90,7 +91,7 @@ class Attribute(models.Model):
        to save or create any entity object for which this attribute applies,
        without first setting this EAV attribute.
 
-    There are 7 possible values for datatype:
+    There are 9 possible values for datatype:
 
         * int (TYPE_INT)
         * float (TYPE_FLOAT)
@@ -99,6 +100,8 @@ class Attribute(models.Model):
         * bool (TYPE_BOOLEAN)
         * object (TYPE_OBJECT)
         * enum (TYPE_ENUM)
+        * location (TYPE_POINT)
+        * area (TYPE_POLYGON)
 
     Examples::
 
@@ -130,6 +133,8 @@ class Attribute(models.Model):
     TYPE_BOOLEAN = 'bool'
     TYPE_OBJECT  = 'object'
     TYPE_ENUM    = 'enum'
+    TYPE_POINT   = 'point'
+    TYPE_AREA    = 'area'
 
     DATATYPE_CHOICES = (
         (TYPE_TEXT,    _('Text')),
@@ -139,9 +144,41 @@ class Attribute(models.Model):
         (TYPE_BOOLEAN, _('True / False')),
         (TYPE_OBJECT,  _('Django Object')),
         (TYPE_ENUM,    _('Multiple Choice')),
+        (TYPE_POINT,   _('Coordinates')),
+        (TYPE_AREA,    _('Area')),
     )
 
     # Core attributes
+
+    """
+    ContentType for the attribute.
+    If set, the attribute is only available to entities of the selected ContentType
+    Use this if an Attribute is only relevant for a specific model.
+    """
+    entity_ct = models.ForeignKey(
+        ContentType,
+        on_delete = models.PROTECT,
+        related_name = 'eav_attributes',
+        null=True,
+        blank=True,
+        help_text='Limit this Attribute to only apply to entities of this ContentType',
+    )
+
+    """
+    Entity ID for the attribute.
+    If set, the attribute is only available to the entity with the specified PK.
+    Use this if an attribute is only relevant for a single instance of a model.
+    """
+    entity_id = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text='Further limit this Attribute to only apply to the entity with this PK',
+    )
+
+    entity_fk = generic.GenericForeignKey(
+        ct_field = 'entity_ct',
+        fk_field = 'entity_id',
+    )
 
     datatype = EavDatatypeField(
         verbose_name = _('Data Type'),
@@ -192,6 +229,14 @@ class Attribute(models.Model):
         help_text    = _('Short description')
     )
 
+    extra_data = models.CharField(
+        verbose_name = _('Extra data'),
+        max_length   = 256,
+        blank        = True,
+        null         = True,
+        help_text    = _('Extra data for this attribute')
+    )
+
     # Useful meta-information
 
     display_order = models.PositiveIntegerField(
@@ -232,6 +277,8 @@ class Attribute(models.Model):
             'bool':   validate_bool,
             'object': validate_object,
             'enum':   validate_enum,
+            'point':  validate_point,
+            'area':   validate_area,
         }
 
         return [DATATYPE_VALIDATORS[self.datatype]]
@@ -364,6 +411,8 @@ class Value(models.Model):
     value_int   = models.IntegerField(blank = True, null = True)
     value_date  = models.DateTimeField(blank = True, null = True)
     value_bool  = models.NullBooleanField(blank = True, null = True)
+    value_point = PointField(blank = True, null = True)
+    value_area  = PolygonField(srid=4326, geography=True, blank = True, null = True)
 
     value_enum  = models.ForeignKey(
         EnumValue,
@@ -505,7 +554,7 @@ class Entity(object):
         Return a query set of all :class:`Attribute` objects that can be set
         for this entity.
         """
-        return self.instance._eav_config_cls.get_attributes().order_by('display_order')
+        return self.instance._eav_config_cls.get_attributes(entity=self.instance).order_by('display_order')
 
     def _hasattr(self, attribute_slug):
         """

@@ -15,6 +15,8 @@ import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.gis.geos.point import Point
+from django.contrib.gis.geos.polygon import Polygon
 
 
 def validate_text(value):
@@ -86,3 +88,22 @@ def validate_enum(value):
 
     if not value.pk:
         raise ValidationError(_(u"EnumValue has not been saved yet"))
+
+
+def validate_point(value):
+    """
+    Raises ``ValidationError`` unless *value* is an instance
+    of :class:`~django.contrib.gis.geos.point.Point`
+    """
+    if not isinstance(value, Point):
+        raise ValidationError(_(u"Must be a geodjango Point object instance"))
+
+
+def validate_area(value):
+    """
+    Raises ``ValidationError`` unless *value* is an instance
+    of :class:`~django.contrib.gis.geos.polygon.Polygon`
+    """
+    if not isinstance(value, Polygon):
+        raise ValidationError(_(u"Must be a geodjango Polygon object instance"))
+
