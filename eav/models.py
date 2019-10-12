@@ -19,6 +19,7 @@ from django.db.models.base import ModelBase
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.gis.db.models import PointField, PolygonField
+from django.contrib.postgres.fields import JSONField
 
 from .validators import (
     validate_text,
@@ -27,7 +28,9 @@ from .validators import (
     validate_date,
     validate_bool,
     validate_object,
-    validate_enum
+    validate_enum,
+    validate_point,
+    validate_area,
 )
 from .exceptions import IllegalAssignmentException
 from .fields import EavDatatypeField, EavSlugField
@@ -237,12 +240,11 @@ class Attribute(models.Model):
         help_text    = _('Short description')
     )
 
-    extra_data = models.CharField(
+    extra_data = JSONField(
         verbose_name = _('Extra data'),
-        max_length   = 256,
         blank        = True,
         null         = True,
-        help_text    = _('Extra data for this attribute')
+        help_text    = _('Extra data for this attribute, as JSON')
     )
 
     # Useful meta-information
