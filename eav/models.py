@@ -415,7 +415,7 @@ class Value(models.Model):
         related_name = 'value_entities'
     )
 
-    entity_id = models.IntegerField()
+    entity_id = models.UUIDField()
     entity = generic.GenericForeignKey(ct_field = 'entity_ct', fk_field = 'entity_id')
 
     value_text  = models.TextField(blank = True, null = True)
@@ -434,7 +434,7 @@ class Value(models.Model):
         related_name = 'eav_values'
     )
 
-    generic_value_id = models.IntegerField(blank=True, null=True)
+    generic_value_id = models.UUIDField(blank=True, null=True)
 
     generic_value_ct = models.ForeignKey(
         ContentType,
